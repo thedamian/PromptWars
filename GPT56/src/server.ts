@@ -472,7 +472,7 @@ async function serveFile(response: ServerResponse, filePath: string, generated =
     response.setHeader("Content-Type", contentType(filePath));
     response.setHeader("Cache-Control", generated ? "no-store" : "no-cache");
     if (generated) {
-      response.setHeader("Content-Security-Policy", "default-src 'self' https: data:; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'none'; frame-ancestors 'none'");
+      response.setHeader("Content-Security-Policy", "default-src 'self' https: data:; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'none'; frame-ancestors 'self'");
     }
     createReadStream(filePath).pipe(response);
   } catch {

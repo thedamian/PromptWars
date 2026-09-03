@@ -5,6 +5,7 @@ const welcome = $("welcome");
 const contest = $("contest");
 const nameForm = $("name-form");
 const promptForm = $("prompt-form");
+const promptArea = document.querySelector(".prompt-area");
 const promptInput = $("prompt");
 const submitButton = $("submit-button");
 const idea = $("idea");
@@ -38,11 +39,16 @@ function connect() {
         state.submissionId = null;
         promptInput.disabled = false;
         submitButton.disabled = false;
+        promptArea.classList.remove("hidden");
       }
       showError(message.message);
       return;
     }
-    if (message.type === "submission") { state.submissionId = message.submissionId; return; }
+    if (message.type === "submission") {
+      state.submissionId = message.submissionId;
+      promptArea.classList.add("hidden");
+      return;
+    }
     if (message.type === "state") renderState(message);
   });
 }
@@ -52,6 +58,7 @@ function renderState(next) {
     promptInput.value = "";
     promptInput.disabled = false;
     submitButton.disabled = false;
+    promptArea.classList.remove("hidden");
     renderStatuses("");
     clearErrors();
   }
@@ -73,10 +80,11 @@ function renderState(next) {
   }
 }
 function updateTimer() {
-  if (!state.endsAt) return;
-  const remaining = Math.max(0, state.endsAt - Date.now());
-  const totalSeconds = Math.ceil(remaining / 1000);
-  timer.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
+  if (state.endsAt) {
+    const remaining = Math.max(0, state.endsAt - Date.now());
+    const totalSeconds = Math.ceil(remaining / 1000);
+    timer.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
+  }
   requestAnimationFrame(updateTimer);
 }
 nameForm.addEventListener("submit", (event) => {
