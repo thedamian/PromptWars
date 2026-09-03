@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prompt Wars – Arena</title>
+  <link rel="stylesheet" href="/arena.css">
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 120 120" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f97316"/><stop offset="1" stop-color="#ec4899"/>
+          </linearGradient>
+        </defs>
+        <circle cx="60" cy="60" r="56" fill="url(#g)"/>
+        <!-- robot head -->
+        <rect x="30" y="38" width="60" height="48" rx="10" fill="#fff7ed"/>
+        <rect x="55" y="24" width="10" height="16" rx="4" fill="#fff7ed"/>
+        <circle cx="60" cy="22" r="6" fill="#fde68a"/>
+        <!-- eyes -->
+        <circle cx="46" cy="58" r="8" fill="#111827"/><circle cx="74" cy="58" r="8" fill="#111827"/>
+        <circle cx="48" cy="56" r="3" fill="#fff"/><circle cx="76" cy="56" r="3" fill="#fff"/>
+        <!-- grin -->
+        <path d="M44 72 Q60 86 76 72" stroke="#111827" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- crossed swords -->
+        <g stroke="#111827" stroke-width="4" stroke-linecap="round">
+          <line x1="20" y1="100" x2="52" y2="68"/><line x1="100" y1="100" x2="68" y2="68"/>
+        </g>
+        <g fill="#fde68a"><circle cx="22" cy="98" r="5"/><circle cx="98" cy="98" r="5"/></g>
+      </svg>
+      <div class="brand-text">
+        <h1>Prompt Wars</h1>
+        <span id="round-label" class="round-label">Round –</span>
+      </div>
+    </div>
+
+    <div class="center">
+      <div id="phase-label" class="phase">Build your site!</div>
+      <div id="timer" class="timer">05:00</div>
+      <div id="idea" class="idea">Loading the next big idea…</div>
+    </div>
+
+    <div class="qr">
+      <img src="/qr.svg" alt="QR code to join Prompt Wars">
+      <span id="qr-url">PromptWars.AIWeek.fun</span>
+    </div>
+  </header>
+
+  <main id="arena" class="arena">
+    <div id="empty" class="empty">
+      <div class="empty-inner">
+        <img src="/qr.svg" alt="QR code to join Prompt Wars" class="big-qr">
+        <h2>Scan to join the battle!</h2>
+        <p id="empty-url">PromptWars.AIWeek.fun</p>
+      </div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="results" class="results hidden"></div>
+    <div id="toast" class="toast hidden"></div>
+  </main>
+
+  <script src="/arena.js"></script>
+</body>
+</html>
