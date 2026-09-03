@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prompt Wars | Arena</title>
+    <link rel="stylesheet" href="/arena.css" />
+  </head>
+  <body>
+    <main class="arena-shell">
+      <header class="arena-header">
+        <div class="brand"><div class="brand-icon">⚡</div><div><h1>Prompt <em>Wars</em></h1><span>AI WEEK // LIVE BUILD BATTLE</span></div></div>
+        <div class="mission"><span>MISSION TIMER</span><strong id="timer">05:00</strong><small id="phase">LIVE</small></div>
+        <div class="join"><div><span>JOIN THE BATTLE</span><strong>PromptWars.AIWeek.fun</strong></div><img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https%3A%2F%2FPromptWars.AIWeek.fun" alt="QR code to join Prompt Wars" /></div>
+      </header>
+      <section class="mission-strip"><span class="eyebrow">CURRENT MISSION</span><h2 id="idea">Connecting to the arena…</h2></section>
+      <section id="grid" class="arena-grid" aria-live="polite"></section>
+      <section id="results" class="results hidden"><div class="results-title"><span>ROUND COMPLETE</span><h2>And the winner is…</h2></div><div id="leaderboard"></div></section>
+      <div id="empty" class="empty"><div>✦</div><p>Waiting for brave builders to enter the arena.</p><small>Scan the QR code to join.</small></div>
+    </main>
+    <script src="/arena.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prompt Wars | Player</title>
+    <link rel="stylesheet" href="/player.css" />
+  </head>
+  <body>
+    <main class="player-shell">
+      <section id="welcome" class="welcome-card">
+        <div class="badge">PROMPT WARS</div>
+        <div class="hero-orbit" aria-hidden="true"><span>⚡</span><span>✦</span><span>◈</span></div>
+        <h1>Enter the<br /><em>Prompt Arena.</em></h1>
+        <p class="intro">One idea. One shot. Five minutes to make an unforgettable website.</p>
+        <form id="name-form">
+          <label for="name">Your first name</label>
+          <input id="name" name="name" autocomplete="given-name" maxlength="32" placeholder="e.g. Alex" required />
+          <button type="submit">Join the battle <span>→</span></button>
+        </form>
+        <p id="welcome-error" class="error" role="alert"></p>
+      </section>
+
+      <section id="contest" class="contest-card hidden">
+        <header class="player-header">
+          <div class="mini-mark">⚡</div>
+          <div><strong>Prompt Wars</strong><small id="player-greeting"></small></div>
+          <div id="connection-dot" class="connection-dot" title="Connecting"></div>
+        </header>
+        <div class="round-banner">
+          <span class="eyebrow">THE CURRENT MISSION</span>
+          <h2 id="idea">Connecting to the arena…</h2>
+          <div class="timer-row"><span id="timer">05:00</span><span>remaining</span></div>
+        </div>
+        <form id="prompt-form" class="prompt-area">
+          <label for="prompt">What should we build?</label>
+          <textarea id="prompt" maxlength="2000" placeholder="Describe the website you want the AI to create. Be bold, specific, and weird…" required></textarea>
+          <div class="prompt-footer"><span id="character-count">0 / 2000</span><button id="submit-button" type="submit">Submit prompt <span>↗</span></button></div>
+        </form>
+        <section class="status-panel">
+          <div class="section-label">BUILD STATUS</div>
+          <ol id="status-list" class="status-list"></ol>
+          <p id="contest-error" class="error" role="alert"></p>
+        </section>
+      </section>
+    </main>
+    <script src="/player.js" type="module"></script>
+  </body>
+</html>
