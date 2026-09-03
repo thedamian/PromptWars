@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Prompt Wars</title>
+  <link rel="stylesheet" href="/player.css">
+</head>
+<body>
+  <header class="top">
+    <span class="logo">🤖⚔️</span>
+    <h1>Prompt Wars</h1>
+  </header>
+
+  <!-- Step 1: name -->
+  <section id="screen-name" class="screen">
+    <h2>Welcome, challenger!</h2>
+    <p>Enter your first name to join the arena.</p>
+    <form id="name-form">
+      <input id="name-input" type="text" maxlength="24" autocomplete="given-name" placeholder="Your first name" required>
+      <button type="submit" class="primary">Let's go →</button>
+    </form>
+  </section>
+
+  <!-- Step 2: prompt -->
+  <section id="screen-play" class="screen hidden">
+    <div class="idea-card">
+      <div class="label">Round <span id="round-number">–</span> · Build this:</div>
+      <div id="idea" class="idea">…</div>
+      <div id="timer" class="timer">05:00</div>
+      <div id="phase" class="phase"></div>
+    </div>
+
+    <form id="prompt-form">
+      <label for="prompt-input" class="hint">Hi <b id="player-name"></b>! Write the prompt the AI will use to build your website:</label>
+      <textarea id="prompt-input" maxlength="1500" placeholder="e.g. A cozy, snowy landing page for Santa's workshop with a countdown to Christmas, a naughty/nice checker and reindeer photos…"></textarea>
+      <div class="row">
+        <span id="char-count" class="count">0 / 1500</span>
+        <button type="submit" id="submit-btn" class="primary small">Submit your prompt</button>
+      </div>
+    </form>
+    <div id="error" class="error hidden"></div>
+
+    <div id="progress" class="progress hidden">
+      <h3>Your submission</h3>
+      <ol class="steps">
+        <li data-step="submitted"><span class="dot"></span>Prompt Submitted</li>
+        <li data-step="processing"><span class="dot"></span>Processing</li>
+        <li data-step="built"><span class="dot"></span>Website Built</li>
+        <li data-step="live"><span class="dot"></span>Display it live</li>
+      </ol>
+      <p id="status-message" class="status-message"></p>
+      <div id="score" class="score hidden"></div>
+    </div>
+  </section>
+
+  <script src="/player.js"></script>
+</body>
+</html>
