@@ -1,6 +1,9 @@
-package-lock.json
 node_modules/
-.env
 dist/
+data/
+.env
+playwright-report/
+test-results/
+package-lock.json
 generated-sites/
 screenshots/

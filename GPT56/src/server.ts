@@ -206,8 +206,8 @@ async function buildWebsite(submission: Submission): Promise<void> {
         content: [{ type: "input_text", text: generationPrompt(submission) }]
       }
     ],
-    temperature: 0.8,
-    max_output_tokens: 8_000
+    //temperature: 0.8,
+    //max_output_tokens: 8_000
   });
   const html = extractHtml(response.output_text);
   const folder = path.join(submissionsDir, submission.id);
