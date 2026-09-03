@@ -144,31 +144,6 @@
         min-height: 0;
       }
 
-      .arena-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 8px 10px;
-        font-size: 0.84rem;
-        font-weight: 700;
-        background: rgba(125, 211, 252, 0.08);
-        border-bottom: 1px solid var(--border);
-      }
-
-      .score-badge {
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 0.7rem;
-        background: rgba(251, 191, 36, 0.15);
-        color: #fde68a;
-      }
-
-      .score-badge.pending {
-        background: rgba(148, 163, 184, 0.12);
-        color: var(--muted);
-      }
-
       .arena-viewport {
         flex: 1;
         min-height: 180px;
@@ -182,13 +157,6 @@
         border: 0;
         display: block;
         background: white;
-      }
-
-      .judgement-line {
-        font-size: 0.72rem;
-        padding: 8px 10px;
-        color: var(--muted);
-        background: rgba(15, 23, 42, 0.72);
       }
 
       .placeholder {
@@ -233,21 +201,13 @@
       const challengeBanner = document.getElementById('challengeBanner');
       const countdown = document.getElementById('countdown');
       const submissionGrid = document.getElementById('submissionGrid');
+      let lastSubmissionKey = '';
 
       function formatCountdown(ms) {
         const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
         const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
         const seconds = String(totalSeconds % 60).padStart(2, '0');
         return `${minutes}:${seconds}`;
-      }
-
-      function escapeHtml(value) {
-        return String(value)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/\"/g, '&quot;')
-          .replace(/'/g, '&#039;');
       }
 
       function renderArena(state) {
@@ -258,36 +218,33 @@
         challengeBanner.textContent = state.currentChallenge || 'Challenge loading...';
         countdown.textContent = formatCountdown(state.remainingMs || 0);
 
-        const visibleSubmissions = (state.submissions || []).slice(0, 6);
+        const visibleSubmissions = (state.submissions || [])
+          .filter((submission) => submission.status === 'display-it-live' && submission.sitePath)
+          .sort((a, b) => b.createdAt - a.createdAt)
+          .slice(0, 6);
+
+        const currentSubmissionKey = visibleSubmissions
+          .map((submission) => `${submission.id}:${submission.sitePath}`)
+          .join('|');
+
+        if (currentSubmissionKey === lastSubmissionKey) {
+          return;
+        }
+
+        lastSubmissionKey = currentSubmissionKey;
 
         if (!visibleSubmissions.length) {
-          submissionGrid.innerHTML = '<div class="placeholder">No entries yet</div>';
+          submissionGrid.innerHTML = '<div class="placeholder">No finished entries yet</div>';
           return;
         }
 
         submissionGrid.innerHTML = visibleSubmissions.map((submission) => {
-          const siteUrl = submission.sitePath ? new URL(submission.sitePath, window.location.origin).toString() : '';
-          const score = submission.score;
-          const scoreBadge = score
-            ? `<div class="score-badge">${score.total.toFixed(1)}</div>`
-            : '<div class="score-badge pending">Waiting</div>';
-
-          const judgeLine = score
-            ? `<div class="judgement-line">Creativity ${score.creativity}/10 · Correctness ${score.correctness}/10 · Bonus ${score.timeliness}</div>`
-            : '<div class="judgement-line">Awaiting judge</div>';
-
-          const frame = siteUrl
-            ? `<div class="arena-viewport"><iframe src="${siteUrl}" title="${escapeHtml(submission.playerName)}"></iframe></div>`
-            : '<div class="arena-viewport"><div class="placeholder">Building</div></div>';
-
+          const siteUrl = new URL(submission.sitePath, window.location.origin).toString();
           return `
             <article class="arena-card">
-              <div class="arena-card-header">
-                <span>${escapeHtml(submission.playerName)}</span>
-                ${scoreBadge}
+              <div class="arena-viewport">
+                <iframe src="${siteUrl}" title="Live submission preview"></iframe>
               </div>
-              ${frame}
-              ${judgeLine}
             </article>`;
         }).join('');
       }

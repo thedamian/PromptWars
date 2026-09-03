@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
@@ -20,8 +21,29 @@ const repoRoot = path.resolve(__dirname, "..");
 const publicDir = path.join(repoRoot, "public");
 const generatedDir = path.join(repoRoot, "generated-sites");
 const screenshotsDir = path.join(repoRoot, "screenshots");
+const cliHostIndex = process.argv.indexOf("--host");
+const host = process.env.HOST ?? (cliHostIndex >= 0 ? process.argv[cliHostIndex + 1] : undefined) ?? "0.0.0.0";
 const port = Number(process.env.PORT ?? 3000);
-const siteBaseUrl = process.env.PUBLIC_BASE_URL ?? `http://localhost:${port}`;
+
+function getLocalLanIp(): string {
+  const interfaces = os.networkInterfaces();
+
+  for (const entries of Object.values(interfaces)) {
+    for (const entry of entries ?? []) {
+      const family = entry.family as string | number;
+      const familyMatches = family === "IPv4" || family === 4;
+      if (familyMatches && !entry.internal) {
+        return entry.address;
+      }
+    }
+  }
+
+  return "127.0.0.1";
+}
+
+const siteBaseUrl = process.env.PUBLIC_BASE_URL && process.env.PUBLIC_BASE_URL.trim().length > 0
+  ? process.env.PUBLIC_BASE_URL
+  : `http://${host === "0.0.0.0" ? getLocalLanIp() : host}:${port}`;
 
 const app = express();
 const server = createServer(app);
@@ -782,7 +804,8 @@ io.on("connection", (socket) => {
     emitState();
   }, 1000);
 
-  server.listen(port, () => {
+  server.listen(port, host, () => {
     console.log(`Prompt Wars running at ${siteBaseUrl}`);
+    console.log(`Listening on ${host}:${port}`);
   });
 })();

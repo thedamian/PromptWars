@@ -19,11 +19,13 @@ Prompt Wars is a real-time TypeScript web app where players submit prompts to bu
    - `OPENAI_MODEL_INTERACT=gpt-5.6-luna`
 2. Install dependencies:
    - `npm install`
-3. Start the app:
-   - `npm start`
-4. Open:
-   - `http://localhost:3000/`
-   - `http://localhost:3000/arena`
+3. Start the app in network-listening mode:
+   - `npm run dev`
+4. Open the app from your machine or another device on the same network using:
+   - `http://<your-ip>:3000/`
+   - `http://<your-ip>:3000/arena`
+
+The server binds to `0.0.0.0` by default so it is reachable by your machine’s LAN IP address. If needed, you can override the public URL with `PUBLIC_BASE_URL=http://<your-ip>:3000` before starting.
 
 ## Notes
 
