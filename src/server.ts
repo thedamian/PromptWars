@@ -92,6 +92,8 @@ type SubmissionStatus =
   | "display-it-live"
   | "rejected";
 
+type GamePhase = "playing" | "judging" | "winner-showcase";
+
 interface Score {
   creativity: number;
   correctness: number;
@@ -112,11 +114,24 @@ interface Submission {
   rejectedReason?: string;
 }
 
+interface LeaderboardEntry {
+  id: string;
+  playerName: string;
+  sitePath: string | null;
+  score: Score;
+  rank: number;
+  createdAt: number;
+}
+
 let currentChallengeIndex = 0;
 let challengeStartedAt = Date.now();
 let challengeEndsAt = challengeStartedAt + FIVE_MINUTES_MS;
 let roundLock = false;
+let gamePhase: GamePhase = "playing";
+let leaderboard: LeaderboardEntry[] = [];
+let currentWinner: LeaderboardEntry | null = null;
 const submissions: Submission[] = [];
+const playerSocketIds = new Map<string, string>();
 
 function getCurrentChallenge(): string {
   return challengeIdeas[currentChallengeIndex] ?? challengeIdeas[0];
@@ -124,11 +139,14 @@ function getCurrentChallenge(): string {
 
 function getCurrentState() {
   return {
+    phase: gamePhase,
     currentChallenge: getCurrentChallenge(),
     challengeIndex: currentChallengeIndex,
     challengeStartedAt,
     challengeEndsAt,
     remainingMs: Math.max(0, challengeEndsAt - Date.now()),
+    leaderboard,
+    winner: currentWinner,
     submissions: submissions
       .slice()
       .sort((a, b) => b.createdAt - a.createdAt)
@@ -311,29 +329,52 @@ async function judgeSubmission(submission: Submission): Promise<Score> {
   if (apiKey) {
     try {
       const client = new OpenAI({ apiKey });
-      const response = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL_INTERACT || "gpt-5.6-luna",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are judging Prompt Wars submissions. Score creativity and correctness on a 1-10 scale and give a short summary. Return JSON in the shape {\"creativity\": number, \"correctness\": number, \"summary\": string}."
-          },
-          {
-            role: "user",
-            content: `Idea: ${submission.idea}\nPrompt: ${submission.prompt}`
-          }
-        ],
-        temperature: 0.2
-      });
+      const screenshotPath = path.join(screenshotsDir, `${submission.id}.png`);
+      let screenshotBase64 = "";
 
-      const unparsed = response.choices[0]?.message?.content;
-      const message = typeof unparsed === "string" ? unparsed : "";
-      const match = message.match(/\{[\s\S]*\}/);
-      if (match) {
-        const parsed = JSON.parse(match[0]) as { creativity?: number; correctness?: number; summary?: string };
-        creativity = clamp(Number(parsed.creativity ?? creativity), 1, 10);
-        correctness = clamp(Number(parsed.correctness ?? correctness), 1, 10);
+      try {
+        const screenshotBytes = await fs.readFile(screenshotPath);
+        screenshotBase64 = screenshotBytes.toString("base64");
+      } catch (error) {
+        screenshotBase64 = "";
+      }
+
+      if (screenshotBase64) {
+        const response = await client.chat.completions.create({
+          model: process.env.OPENAI_MODEL_OPEN || "gpt-5.6-terra",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are judging Prompt Wars submissions using only the screenshot. Rate creativity and accuracy to the idea on a 1-10 scale, then add a short summary. Return JSON in the shape {\"creativity\": number, \"correctness\": number, \"summary\": string}."
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `Judgement target idea: ${submission.idea}. Use the screenshot as the only evidence. Score on creativity and how closely it matches the idea.`
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:image/png;base64,${screenshotBase64}`
+                  }
+                }
+              ]
+            }
+          ],
+          temperature: 0.2
+        });
+
+        const unparsed = response.choices[0]?.message?.content;
+        const message = typeof unparsed === "string" ? unparsed : "";
+        const match = message.match(/\{[\s\S]*\}/);
+        if (match) {
+          const parsed = JSON.parse(match[0]) as { creativity?: number; correctness?: number; summary?: string };
+          creativity = clamp(Number(parsed.creativity ?? creativity), 1, 10);
+          correctness = clamp(Number(parsed.correctness ?? correctness), 1, 10);
+        }
       }
     } catch (error) {
       // Fallback to the heuristic judge below.
@@ -656,6 +697,31 @@ async function captureSubmissionScreenshot(submission: Submission): Promise<void
   }
 }
 
+function rankLiveSubmissions(): LeaderboardEntry[] {
+  return submissions
+    .filter((submission) => submission.status === "display-it-live" && submission.score)
+    .map((submission) => ({
+      id: submission.id,
+      playerName: submission.playerName,
+      sitePath: submission.sitePath,
+      score: submission.score as Score,
+      rank: 0,
+      createdAt: submission.createdAt
+    }))
+    .sort((a, b) => b.score.total - a.score.total || a.createdAt - b.createdAt)
+    .map((entry, index) => ({ ...entry, rank: index + 1 }));
+}
+
+function beginNextRound() {
+  currentChallengeIndex = (currentChallengeIndex + 1) % challengeIdeas.length;
+  challengeStartedAt = Date.now();
+  challengeEndsAt = challengeStartedAt + FIVE_MINUTES_MS;
+  leaderboard = [];
+  currentWinner = null;
+  gamePhase = "playing";
+  emitState();
+}
+
 async function finalizeRound() {
   if (roundLock) {
     return;
@@ -671,20 +737,37 @@ async function finalizeRound() {
       submission.score = await judgeSubmission(submission);
     }
 
-    const scores = liveSubmissions
-      .map((submission) => ({
-        id: submission.id,
-        playerName: submission.playerName,
-        score: submission.score ?? { creativity: 0, correctness: 0, timeliness: 0, total: 0, summary: "Pending" }
-      }))
-      .sort((a, b) => (b.score.total ?? 0) - (a.score.total ?? 0));
+    leaderboard = rankLiveSubmissions();
+    currentWinner = leaderboard[0] ?? null;
 
-    io.emit("judge:results", { results: scores });
+    io.emit("judge:results", { results: leaderboard });
 
-    currentChallengeIndex = (currentChallengeIndex + 1) % challengeIdeas.length;
-    challengeStartedAt = Date.now();
-    challengeEndsAt = challengeStartedAt + FIVE_MINUTES_MS;
+    challengeEndsAt = Date.now();
+    gamePhase = "judging";
     emitState();
+
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+
+    if (currentWinner) {
+      gamePhase = "winner-showcase";
+      emitState();
+
+      const winnerName = currentWinner.playerName;
+      const winnerSocketId = playerSocketIds.get(winnerName);
+      if (winnerSocketId) {
+        io.to(winnerSocketId).emit("player:won", {
+          playerName: winnerName,
+          score: currentWinner.score,
+          rank: currentWinner.rank,
+          sitePath: currentWinner.sitePath,
+          leaderboard
+        });
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 60000));
+    }
+
+    beginNextRound();
   } finally {
     roundLock = false;
   }

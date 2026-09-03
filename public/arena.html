@@ -151,6 +151,110 @@
         overflow: hidden;
       }
 
+      .judging-stage,
+      .winner-stage {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        background: rgba(7, 16, 27, 0.9);
+        border: 1px solid var(--border);
+        color: var(--text);
+        text-align: center;
+        padding: 20px;
+      }
+
+      .judging-stage {
+        font-size: clamp(1.8rem, 3vw, 3.2rem);
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .winner-shell {
+        width: min(100%, 1400px);
+        display: grid;
+        grid-template-columns: minmax(0, 2.4fr) minmax(220px, 0.8fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .winner-card {
+        background: rgba(12, 24, 38, 0.92);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .winner-name {
+        margin: 0 0 18px;
+        font-size: clamp(2.1rem, 4vw, 4.2rem);
+        line-height: 1;
+        letter-spacing: -0.05em;
+      }
+
+      .winner-frame {
+        flex: 1;
+        min-height: 420px;
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .winner-frame iframe {
+        width: 100%;
+        height: 100%;
+      }
+
+      .leaderboard-panel {
+        background: rgba(12, 24, 38, 0.92);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 18px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .leaderboard-panel h3 {
+        margin: 0;
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .leaderboard-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: auto;
+      }
+
+      .leaderboard-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(148, 163, 184, 0.08);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      .leaderboard-item strong {
+        font-size: 0.95rem;
+      }
+
+      .leaderboard-score {
+        color: var(--gold);
+        font-weight: 800;
+      }
+
       iframe {
         width: 100%;
         height: 100%;
@@ -217,6 +321,45 @@
 
         challengeBanner.textContent = state.currentChallenge || 'Challenge loading...';
         countdown.textContent = formatCountdown(state.remainingMs || 0);
+
+        if (state.phase === 'judging') {
+          submissionGrid.innerHTML = '<div class="judging-stage">Judging is happening...</div>';
+          return;
+        }
+
+        if (state.phase === 'winner-showcase') {
+          const winner = state.winner || (state.leaderboard && state.leaderboard[0]);
+          const leaderboard = (state.leaderboard || []).slice(0, 6);
+
+          if (!winner) {
+            submissionGrid.innerHTML = '<div class="judging-stage">Judging is happening...</div>';
+            return;
+          }
+
+          const siteUrl = winner.sitePath ? new URL(winner.sitePath, window.location.origin).toString() : '';
+          const leaderboardHtml = leaderboard.map((item) => `
+            <div class="leaderboard-item">
+              <strong>#${item.rank} ${item.playerName}</strong>
+              <span class="leaderboard-score">${item.score.total.toFixed(1)}</span>
+            </div>`).join('');
+
+          submissionGrid.innerHTML = `
+            <div class="winner-stage">
+              <div class="winner-shell">
+                <div class="winner-card">
+                  <h2 class="winner-name">${winner.playerName}</h2>
+                  <div class="winner-frame">
+                    ${siteUrl ? `<iframe src="${siteUrl}" title="Winner preview"></iframe>` : '<div class="placeholder">Winner site</div>'}
+                  </div>
+                </div>
+                <aside class="leaderboard-panel">
+                  <h3>Leaderboard</h3>
+                  <div class="leaderboard-list">${leaderboardHtml}</div>
+                </aside>
+              </div>
+            </div>`;
+          return;
+        }
 
         const visibleSubmissions = (state.submissions || [])
           .filter((submission) => submission.status === 'display-it-live' && submission.sitePath)

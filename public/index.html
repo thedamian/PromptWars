@@ -362,6 +362,14 @@
         setStatusUI(submission);
       });
 
+      socket.on('player:won', (payload) => {
+        const winnerName = localStorage.getItem('promptWarsPlayerName');
+        if (winnerName && payload.playerName === winnerName) {
+          submissionMessage.textContent = `You won! Rank #${payload.rank} with ${payload.score.total.toFixed(1)} points.`;
+          statusSteps.forEach((step) => step.classList.add('done'));
+        }
+      });
+
       socket.on('player:error', (payload) => {
         submitPromptButton.disabled = false;
         submissionMessage.textContent = payload.message || 'There was a problem with your prompt.';
